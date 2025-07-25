@@ -1,0 +1,1 @@
+quart --app MyComics.py run --reload

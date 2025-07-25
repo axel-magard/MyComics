@@ -1,0 +1,1 @@
+flask --app MyComics_f.py run --debug
