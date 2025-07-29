@@ -23,6 +23,13 @@ pip install flask==3.1.0
 Use run_f.cmd to start, or type
 `flask --app MyComics_f.py run --debug`
 
-A demo version can be seen [here](https://axmagard.eu.pythonanywhere.com/) on pythonanywhere.
+A demo version can be seen [here](https://axmagard.eu.pythonanywhere.com/demo) on pythonanywhere.
+
+The "Options" page ( reachable thru button with gear icon ) allows to
+* pick favorite comics from comics available
+* randomly display a comic from comics available
+
+Favorite comics will be shown in listbox on main page.
+Comics to be display can be selected or de-selected from that list of favorites.
 
 
