@@ -2,11 +2,12 @@ import asyncio
 import requests
 from datetime import datetime, timedelta
 import comics
+import feedparser
 from bs4 import BeautifulSoup
 import time
 import random
 from flask import Flask, request, render_template_string, session, redirect, url_for
-from MyComicsHTML import head, body, body_o, rootURL, entry, form, form_o, opt, checkbox, hidden
+from MyComicsHTML import head, body, body_o, rootURL, entry, entryRSS, form, form_o, opt, checkbox, hidden
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'ahfjkahw hawui666'
@@ -60,12 +61,43 @@ def fetchComic(comic, date, messages):
         messages += "Can not connect to '%s' page for date %s.\n" % (comic,date)
         return ("<div></div>",date,messages)
 
+def fetchComicUsingRSS(comic, date, messages):
+    def getDateFromFeed(entry):
+        return datetime.strftime(datetime.strptime(("%d %d %d" % (entry.published_parsed.tm_year,entry.published_parsed.tm_mon,entry.published_parsed.tm_mday)),"%Y %m %d"),"%Y-%m-%d")
+
+    url = "https://comiccaster.xyz/rss/"
+    feed = feedparser.parse(url+comic)
+    html_all = ""
+    cnt = 1
+    e = "<div>Nothing found :-(</div>"
+
+    if feed.status == 200:
+        n = 0
+        for entry in reversed(feed.entries):
+            soup = BeautifulSoup(entry.summary, features="html.parser")
+            print(date,getDateFromFeed(entry))
+            if n == 0:
+                startDate = getDateFromFeed(entry)
+            if date == getDateFromFeed(entry):
+                for i in soup.find_all("img"):
+                    try:
+                        e = entryRSS % (entry.title,rootURL+comic+"/"+date.replace("-","/"),str(i))
+                    except TypeError: pass
+            n += 1
+        else:
+            endDate = getDateFromFeed(entry)
+    else:
+        with output:
+            messages += "Failed to get RSS feed. Status code:" + feed.status
+
+    return e,date,messages
+
 def retrieveComics(favs,day):
     messages = ""
     content = ""
     if favs:
         for comic in favs:
-            c,dat,messages = fetchComic(comic, day, messages)
+            c,dat,messages = fetchComicUsingRSS(comic, day, messages)
             content += c
     return content,day,messages
 

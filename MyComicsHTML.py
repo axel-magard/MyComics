@@ -36,6 +36,7 @@ body_o = """
 rootURL = "https://www.gocomics.com/"
 
 entry = "<div class='comic'><a href='%s' target=_NEW_><img src='%s'/></a></div>\n"
+entryRSS = "<div class='comic'><h2>%s</h2><a href='%s' target=_NEW_>%s</a></div>\n"
 
 form = """
 <form action='/'>
