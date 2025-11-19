@@ -55,6 +55,9 @@ form = """
   name="maxDate"
   value="%s" />
 <p>
+<input type="range" min="1" max="10" value="%s" class="slider" id="noComics" name="noComics" oninput="this.nextElementSibling.value = this.value">
+<output>%s</output>
+<p>
 <label for="favorites">Favorite comics:</label>
 </p><p>
 <select name="favorites" multiple>

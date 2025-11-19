@@ -61,27 +61,29 @@ def fetchComic(comic, date, messages):
         messages += "Can not connect to '%s' page for date %s.\n" % (comic,date)
         return ("<div></div>",date,messages)
 
-def fetchComicUsingRSS(comic, date, messages):
+def fetchComicUsingRSS(comic, date, noComics, messages):
     def getDateFromFeed(entry):
         return datetime.strftime(datetime.strptime(("%d %d %d" % (entry.published_parsed.tm_year,entry.published_parsed.tm_mon,entry.published_parsed.tm_mday)),"%Y %m %d"),"%Y-%m-%d")
 
     url = "https://comiccaster.xyz/rss/"
     feed = feedparser.parse(url+comic)
     html_all = ""
-    cnt = 1
-    e = "<div>Nothing found :-(</div>"
+    cnt = -1
+    e = ""
 
     if feed.status == 200:
         n = 0
         for entry in reversed(feed.entries):
             soup = BeautifulSoup(entry.summary, features="html.parser")
-            print(date,getDateFromFeed(entry))
             if n == 0:
                 startDate = getDateFromFeed(entry)
             if date == getDateFromFeed(entry):
+                cnt = 0
+            if cnt >= 0 and cnt < int(noComics):
                 for i in soup.find_all("img"):
                     try:
-                        e = entryRSS % (entry.title,rootURL+comic+"/"+date.replace("-","/"),str(i))
+                        e += entryRSS % (entry.title,rootURL+comic+"/"+date.replace("-","/"),str(i))
+                        cnt += 1
                     except TypeError: pass
             n += 1
         else:
@@ -92,12 +94,12 @@ def fetchComicUsingRSS(comic, date, messages):
 
     return e,date,messages
 
-def retrieveComics(favs,day):
+def retrieveComics(favs,day,noComics):
     messages = ""
     content = ""
     if favs:
         for comic in favs:
-            c,dat,messages = fetchComicUsingRSS(comic, day, messages)
+            c,dat,messages = fetchComicUsingRSS(comic, day, noComics, messages)
             content += c
     return content,day,messages
 
@@ -109,6 +111,7 @@ def make_session_permanent():
 def main(button=None):
     clock = Stopwatch()
     day = request.args.get("dateSelected")
+    noComics = request.args.get("noComics")
     if button:
         day = newDay(button,day)
     if not day:
@@ -126,7 +129,7 @@ def main(button=None):
         favs = session.get('favs')
 
     print(myComics,favs)
-    content,dat,messages = retrieveComics(favs,day)
+    content,dat,messages = retrieveComics(favs,day,noComics)
 
     listbox = ""
     if myComics:
@@ -136,7 +139,7 @@ def main(button=None):
                 if comic in favs:
                     sel = "selected"
             listbox += opt % (comic,sel,comic)
-    f = form % (dat,maxDate,maxDate,listbox,messages)
+    f = form % (dat,maxDate,maxDate,noComics,noComics,listbox,messages)
     nav_html = "<div><p>%s</p><p>%s</p></div>" % (dat,f)
     showTimeElapsed(clock)
     resp = render_template_string("<html>" + head + (body % (nav_html,content)) + "</html>")
@@ -175,12 +178,14 @@ def options(button=None):
         listbox += hidden % ("favorites",comic,comic)
     day = request.args.get("dateSelected")
     listbox += hidden % ("dateSelected",day,day)
+    noComics = request.args.get("noComics")
+    listbox += hidden % ("noComics",noComics,noComics)
     f = form_o % (listbox,)
     content = ""
     if button == "Random":
         favs = []
         favs.append(random.choice(comics.directory.listall()))
-        content,dat,messages = retrieveComics(favs,day)
+        content,dat,messages = retrieveComics(favs,day,noComics)
         content = "<h1>" + favs[0] + "</h1>" + content
     return "<html>" + head + (body_o % (f,content)) + "</html>"
 
