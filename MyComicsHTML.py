@@ -47,35 +47,35 @@ form = """
   value="%s"
   min="1980-01-01"
   max="%s" />
-<button id="buttForw" formaction="/forw" type="submit">></button> 
+<button id="buttForw" formaction="/forw" type="submit">></button>
 <input
   type="hidden"
   id="maxDate"
   name="maxDate"
-  value="%s" />  
-<p>    
+  value="%s" />
+<p>
 <label for="favorites">Favorite comics:</label>
 </p><p>
 <select name="favorites" multiple>
 %s
 </select>
-</p> 
-<p><div class="messages">%s</div></p>  
+</p>
+<p><div class="messages">%s</div></p>
 <p><button autofocus>Submit</button>
 <button id="buttOpt" formaction="/options" type="submit">⚙️</button>
 <button id="buttToday" formaction="/today" type="submit">Today</button></p>
-</form>  
+</form>
 """
 
 form_o = """
 <form action='/'>
-<p>    
+<p>
 <label for="comics">Comics available:</label>
 </p><p>
 <div class="options">
 %s
 </div>
-</p> 
+</p>
 <button autofocus type="submit">OK</button>
 <button id="buttRandom" formaction="/random" type="submit">Random</button>
 </p>
@@ -87,11 +87,11 @@ opt = """
 """
 
 checkbox = """
-<input name="comic" value="%s" type="checkbox" %s> 
+<input name="comic" value="%s" type="checkbox" %s>
 <label for="%s">%s</label><br/>
 """
 
 hidden = """
-<input name="%s" value="%s" type="hidden" %s> 
+<input name="%s" value="%s" type="hidden" %s>
 <br/>
 """

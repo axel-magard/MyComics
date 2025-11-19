@@ -35,60 +35,60 @@ def fmtTime(t):
         str = "%4.2f minutes " % (t/60)
     if t > 3600:
         str = "%4.2f hours   " % (t/3600)
-    return str        
+    return str
 
 def getImgFromWeb(url):
     imgURL = ""
-    r = requests.get(url)  
+    r = requests.get(url)
     soup = BeautifulSoup(r.text, features="html.parser")
     for div in soup.find_all(isComicViewer):
         for img in div.find_all('img'):
             if img:
                 if "featureassets" in img.attrs["src"]:
                     imgURL = img.attrs["src"]
-        break # We only want the first comic strip on that page ! 
+        break # We only want the first comic strip on that page !
     return imgURL
 
 async def fetchComic(comic, date, queue, messages):
     try:
         co = comics.search(comic, date=date)
-        e = entry % (rootURL+comic+"/"+date.replace("-","/"),co.image_url)             
+        e = entry % (rootURL+comic+"/"+date.replace("-","/"),co.image_url)
         queue.put_nowait((e,date,messages))
         queue.task_done()
     except comics.exceptions.InvalidDateError:
         queue.put_nowait(("<div></div>",date,messages))
-        queue.task_done()    
+        queue.task_done()
     except requests.exceptions.ConnectionError:
-        messages += "Can not connect to '%s' page for date %s.\n" % (comic,date)    
+        messages += "Can not connect to '%s' page for date %s.\n" % (comic,date)
         queue.put_nowait(("<div></div>",date,messages))
-        queue.task_done()   
+        queue.task_done()
 
 async def retrieveComics(favs,day):
     messages = ""
     content = ""
     tasks = []
-    queue = asyncio.Queue()     
-    for comic in favs:       
+    queue = asyncio.Queue()
+    for comic in favs:
             task = asyncio.create_task(fetchComic(comic, day, queue, messages))
-            tasks.append(task)    
+            tasks.append(task)
             await task
     await queue.join()
     # Cancel our worker tasks.
     for task in tasks:
-        task.cancel()    
+        task.cancel()
     # Wait until all worker tasks are cancelled.
     await asyncio.gather(*tasks, return_exceptions=True)
     while not queue.empty():
         obj = await queue.get()
         c,dat,messages = obj
         content += c
-    return content,day,messages     
+    return content,day,messages
 
 
 @app.before_request
 def make_session_permanent():
-    session.permanent = True        
-    
+    session.permanent = True
+
 @app.route("/")
 async def main(button=None):
     clock = Stopwatch()
@@ -96,32 +96,32 @@ async def main(button=None):
     if button:
         day = newDay(button,day)
     if not day:
-        day = datetime.today().strftime("%Y-%m-%d") 
+        day = datetime.today().strftime("%Y-%m-%d")
     if button == "Today":
-        day = datetime.today().strftime("%Y-%m-%d")               
+        day = datetime.today().strftime("%Y-%m-%d")
     maxDate = request.args.get("maxDate")
     if not maxDate or button == "Today":
         maxDate = day
     favs = request.args.getlist("favorites")
-    myComics = request.args.getlist("comic")    
+    myComics = request.args.getlist("comic")
     if not myComics:
-        myComics = session['myComics']   
+        myComics = session['myComics']
     if not favs:
-        favs = session['favs'] 
-    
+        favs = session['favs']
+
     print(myComics,favs)
     content,dat,messages = await retrieveComics(favs,day)
-    
+
     listbox = ""
     for comic in myComics:
         sel = ""
         if comic in favs:
             sel = "selected"
-        listbox += opt % (comic,sel,comic)              
+        listbox += opt % (comic,sel,comic)
     f = form % (dat,maxDate,maxDate,listbox,messages)
     nav_html = "<div><p>%s</p><p>%s</p></div>" % (dat,f)
     showTimeElapsed(clock)
-    resp = render_template_string("<html>" + head + (body % (nav_html,content)) + "</html>") 
+    resp = render_template_string("<html>" + head + (body % (nav_html,content)) + "</html>")
     session['myComics'] = myComics
     session['favs'] = favs
     return await resp
@@ -154,7 +154,7 @@ async def options(button=None):
         listbox += checkbox % (comic,attr,comic,comic)
     for comic in favs:      # Add favs as hidden fields to pass on ....
         listbox += hidden % ("favorites",comic,comic)
-    day = request.args.get("dateSelected")         
+    day = request.args.get("dateSelected")
     listbox += hidden % ("dateSelected",day,day)
     f = form_o % (listbox,)
     content = ""
@@ -174,7 +174,7 @@ async def handleRandom():
 def handleClear():
     session['myComics'] = []
     session['favs'] = []
-    return redirect(url_for('options')) 
+    return redirect(url_for('options'))
 
 @app.route("/demo")
 def handleDemo():
@@ -188,11 +188,11 @@ def makeDTValue(txt,year):
     return datetime.strptime(" ".join(arr), '%B %d %Y')
 
 def newDay(button, day):
-    d = datetime.strptime(day, '%Y-%m-%d')    
+    d = datetime.strptime(day, '%Y-%m-%d')
     if button == "Forw":
         d += timedelta(1)
     elif button == "Back":
-        d -= timedelta(1)    
+        d -= timedelta(1)
     return(d.strftime('%Y-%m-%d'))
 
 def isComicViewer(tag):

@@ -35,67 +35,67 @@ def fmtTime(t):
         str = "%4.2f minutes " % (t/60)
     if t > 3600:
         str = "%4.2f hours   " % (t/3600)
-    return str        
+    return str
 
 def getImgFromWeb(url):
     imgURL = ""
-    r = requests.get(url)  
+    r = requests.get(url)
     soup = BeautifulSoup(r.text, features="html.parser")
     for div in soup.find_all(isComicViewer):
         for img in div.find_all('img'):
             if img:
                 if "featureassets" in img.attrs["src"]:
                     imgURL = img.attrs["src"]
-        break # We only want the first comic strip on that page ! 
+        break # We only want the first comic strip on that page !
     return imgURL
 
 def fetchComic(comic, date, messages):
     try:
         co = comics.search(comic, date=date)
-        e = entry % (rootURL+comic+"/"+date.replace("-","/"),co.image_url)             
+        e = entry % (rootURL+comic+"/"+date.replace("-","/"),co.image_url)
         return e,date,messages
     except comics.exceptions.InvalidDateError:
         return ("<div></div>",date,messages)
     except requests.exceptions.ConnectionError:
-        messages += "Can not connect to '%s' page for date %s.\n" % (comic,date)    
+        messages += "Can not connect to '%s' page for date %s.\n" % (comic,date)
         return ("<div></div>",date,messages)
 
 def retrieveComics(favs,day):
     messages = ""
     content = ""
     if favs:
-        for comic in favs:       
+        for comic in favs:
             c,dat,messages = fetchComic(comic, day, messages)
-            content += c 
-    return content,day,messages     
+            content += c
+    return content,day,messages
 
 
 @app.before_request
 def make_session_permanent():
-    session.permanent = True     
+    session.permanent = True
 @app.route("/")
-def main(button=None):    
+def main(button=None):
     clock = Stopwatch()
     day = request.args.get("dateSelected")
     if button:
         day = newDay(button,day)
     if not day:
-        day = datetime.today().strftime("%Y-%m-%d") 
+        day = datetime.today().strftime("%Y-%m-%d")
     if button == "Today":
-        day = datetime.today().strftime("%Y-%m-%d")               
+        day = datetime.today().strftime("%Y-%m-%d")
     maxDate = request.args.get("maxDate")
     if not maxDate or button == "Today":
         maxDate = day
     favs = request.args.getlist("favorites")
-    myComics = request.args.getlist("comic")    
+    myComics = request.args.getlist("comic")
     if not myComics:
-        myComics = session.get('myComics')   
+        myComics = session.get('myComics')
     if not favs:
         favs = session.get('favs')
-    
+
     print(myComics,favs)
     content,dat,messages = retrieveComics(favs,day)
-    
+
     listbox = ""
     if myComics:
         for comic in myComics:
@@ -103,11 +103,11 @@ def main(button=None):
             if favs:
                 if comic in favs:
                     sel = "selected"
-            listbox += opt % (comic,sel,comic)              
+            listbox += opt % (comic,sel,comic)
     f = form % (dat,maxDate,maxDate,listbox,messages)
     nav_html = "<div><p>%s</p><p>%s</p></div>" % (dat,f)
     showTimeElapsed(clock)
-    resp = render_template_string("<html>" + head + (body % (nav_html,content)) + "</html>") 
+    resp = render_template_string("<html>" + head + (body % (nav_html,content)) + "</html>")
     session['myComics'] = myComics
     session['favs'] = favs
     return resp
@@ -141,7 +141,7 @@ def options(button=None):
         listbox += checkbox % (comic,attr,comic,comic)
     for comic in favs:      # Add favs as hidden fields to pass on ....
         listbox += hidden % ("favorites",comic,comic)
-    day = request.args.get("dateSelected")         
+    day = request.args.get("dateSelected")
     listbox += hidden % ("dateSelected",day,day)
     f = form_o % (listbox,)
     content = ""
@@ -156,12 +156,12 @@ def options(button=None):
 def handleRandom():
     html = options("Random")
     return html
-   
+
 @app.route("/clear")
 def handleClear():
     session['myComics'] = []
     session['favs'] = []
-    return redirect(url_for('options')) 
+    return redirect(url_for('options'))
 
 @app.route("/demo")
 def handleDemo():
@@ -175,11 +175,11 @@ def makeDTValue(txt,year):
     return datetime.strptime(" ".join(arr), '%B %d %Y')
 
 def newDay(button, day):
-    d = datetime.strptime(day, '%Y-%m-%d')    
+    d = datetime.strptime(day, '%Y-%m-%d')
     if button == "Forw":
         d += timedelta(1)
     elif button == "Back":
-        d -= timedelta(1)    
+        d -= timedelta(1)
     return(d.strftime('%Y-%m-%d'))
 
 def isComicViewer(tag):
