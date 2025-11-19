@@ -112,6 +112,8 @@ def main(button=None):
     clock = Stopwatch()
     day = request.args.get("dateSelected")
     noComics = request.args.get("noComics")
+    if not noComics:
+        noComics = 1
     if button:
         day = newDay(button,day)
     if not day:
