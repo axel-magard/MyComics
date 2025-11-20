@@ -1,5 +1,5 @@
 # MyComics
-A viewer for favorite comics from gocomics.com
+A viewer for favorite comics from [gocomics.com](https://www.gocomics.com/)
 
 ## Features
 Initially displays all comics for current day. Allow to navigate back day by day or select a date from a date picker.
@@ -31,5 +31,10 @@ The "Options" page ( reachable thru button with gear icon ) allows to
 
 Favorite comics will be shown in listbox on main page.
 Comics to be display can be selected or de-selected from that list of favorites.
+
+The "Use RSS" checkbox allows to chose whether to use [PyPI Comics API](https://pypi.org/project/comics/) or the
+RSS feed from [gocomics.com](https://www.gocomics.com/).
+
+RSS feed is much faster but only supports access to entries from last ~100 days.
 
 
