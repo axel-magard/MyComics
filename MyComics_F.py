@@ -50,16 +50,19 @@ def getImgFromWeb(url):
         break # We only want the first comic strip on that page !
     return imgURL
 
-def fetchComic(comic, date, messages):
-    try:
-        co = comics.search(comic, date=date)
-        e = entry % (rootURL+comic+"/"+date.replace("-","/"),co.image_url)
-        return e,date,messages
-    except comics.exceptions.InvalidDateError:
-        return ("<div></div>",date,messages)
-    except requests.exceptions.ConnectionError:
-        messages += "Can not connect to '%s' page for date %s.\n" % (comic,date)
-        return ("<div></div>",date,messages)
+def fetchComic(comic, date, noComics, messages):
+    e = ""
+    for i in range(int(noComics)):
+        try:
+            co = comics.search(comic, date=date)
+            e += entry % (comic+" - "+date,rootURL+comic+"/"+date.replace("-","/"),co.image_url)
+        except comics.exceptions.InvalidDateError:
+            return ("<div></div>",date,messages)
+        except requests.exceptions.ConnectionError:
+            messages += "Can not connect to '%s' page for date %s.\n" % (comic,date)
+            return ("<div></div>",date,messages)
+        date = newDay("Forw",date)
+    return e,date,messages
 
 def fetchComicUsingRSS(comic, date, noComics, messages):
     def getDateFromFeed(entry):
@@ -97,9 +100,13 @@ def fetchComicUsingRSS(comic, date, noComics, messages):
 def retrieveComics(favs,day,noComics):
     messages = ""
     content = ""
+    useRSS = request.args.get("useRSS")
     if favs:
         for comic in favs:
-            c,dat,messages = fetchComicUsingRSS(comic, day, noComics, messages)
+            if useRSS:
+                c,dat,messages = fetchComicUsingRSS(comic, day, noComics, messages)
+            else:
+                c,dat,messages = fetchComic(comic, day, noComics, messages)
             content += c
     return content,day,messages
 
@@ -141,7 +148,12 @@ def main(button=None):
                 if comic in favs:
                     sel = "selected"
             listbox += opt % (comic,sel,comic)
-    f = form % (dat,maxDate,maxDate,noComics,noComics,listbox,messages)
+    rssFlag = ""
+    useRSS = request.args.get("useRSS")
+    if useRSS:
+        rssFlag = "checked"
+    print(useRSS, rssFlag)
+    f = form % (rssFlag,dat,maxDate,maxDate,noComics,noComics,listbox,messages)
     nav_html = "<div><p>%s</p><p>%s</p></div>" % (dat,f)
     showTimeElapsed(clock)
     resp = render_template_string("<html>" + head + (body % (nav_html,content)) + "</html>")
